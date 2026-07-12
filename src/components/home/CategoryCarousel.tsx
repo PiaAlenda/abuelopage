@@ -85,7 +85,7 @@ function CarouselSection({ category }: { category: string }) {
       <div className="relative">
         <div
           ref={ref}
-          className="overflow-x-auto scrollbar-none scroll-smooth pb-4 touch-pan-x"
+          className="overflow-x-auto scrollbar-none scroll-smooth pb-4"
         >
           <div className="flex gap-5">
             {items.map((product) => (
