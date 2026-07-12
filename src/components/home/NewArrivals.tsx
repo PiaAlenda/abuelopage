@@ -17,8 +17,9 @@ export default function NewArrivals() {
               <div className="relative aspect-square bg-surface-container-low rounded-lg overflow-hidden mb-4 shadow-sm">
                 <img
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  src={product.image}
+                  src={product.image || '/products/placeholder.svg'}
                   alt={product.alt}
+                  onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
                 />
                 <button className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-md rounded-full shadow-sm hover:bg-primary-container hover:text-white transition-all active:scale-90">
                   <span className="material-symbols-outlined text-sm">favorite</span>

@@ -59,9 +59,10 @@ export default function CartDrawer() {
             items.map((item) => (
               <div key={item.product.id} className="flex gap-2.5 bg-white rounded-xl p-2.5 border border-neutral-200/50">
                 <img
-                  src={item.product.image}
+                  src={item.product.image || '/products/placeholder.svg'}
                   alt={item.product.alt}
                   className="w-14 h-14 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0"
+                  onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
                 />
                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                   <div>

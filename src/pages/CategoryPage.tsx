@@ -239,10 +239,11 @@ export default function CategoryPage() {
                       >
                         <div className={`relative aspect-[3/4] bg-[#FAF7F2] rounded-2xl overflow-hidden border ${isSold ? 'border-neutral-300/50' : 'border-neutral-200/60'}`}>
                           <img
-                            src={product.image}
+                            src={product.image || '/products/placeholder.svg'}
                             alt={product.alt}
                             className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                             loading="lazy"
+                            onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
                           />
                           {isSold && (
                             <div className="absolute inset-0 flex items-center justify-center">

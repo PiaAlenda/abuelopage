@@ -27,7 +27,7 @@ export default function Header() {
     if (!query.trim()) return []
     const q = normalize(query)
     return displayProducts.filter(p =>
-      normalize(p.name).startsWith(q)
+      normalize(p.name).includes(q)
     ).slice(0, 10)
   }, [query])
 
@@ -137,9 +137,10 @@ export default function Header() {
                           <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-lg overflow-hidden bg-[#FAF7F2] flex-shrink-0">
                             <img
                               className="w-full h-full object-cover"
-                              src={p.image}
+                              src={p.image || '/products/placeholder.svg'}
                               alt={p.alt}
                               loading="lazy"
+                              onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
                             />
                           </div>
                           <div className="flex-1 min-w-0">

@@ -78,9 +78,10 @@ export default function ProductCard({ product, className = '', compact = false }
           <div className={`relative ${compact ? 'aspect-[4/3]' : 'aspect-square'} bg-[#FAF7F2] rounded-2xl overflow-hidden ${isSold ? 'opacity-60' : ''}`}>
             <img
               className="w-full h-full object-cover group-hover/card:scale-[1.03] transition-transform duration-500"
-              src={product.image}
+              src={product.image || '/products/placeholder.svg'}
               alt={product.alt}
               loading="lazy"
+              onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
             />
             {isSold && (
               <div className="absolute inset-0 flex items-center justify-center">

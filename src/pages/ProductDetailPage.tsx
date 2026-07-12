@@ -12,6 +12,18 @@ const relatedProducts = (product: Product, all: Product[], count = 10): Product[
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, count)
 
+const isSameImage = (url1: string, url2: string): boolean => {
+  const normalize = (url: string) => {
+    if (!url) return ''
+    try {
+      return decodeURIComponent(url).replace(/_/g, ' ').trim().toLowerCase()
+    } catch {
+      return url.replace(/_/g, ' ').trim().toLowerCase()
+    }
+  }
+  return normalize(url1) === normalize(url2)
+}
+
 function WhatsAppButton() {
   return (
     <a
@@ -141,7 +153,7 @@ export default function ProductDetailPage() {
   const isConsultar = !isSold && product.price == null
 
   const related = relatedProducts(product, displayProducts)
-  const galleryImages: string[] = product.images ?? [product.image]
+  const galleryImages: string[] = (product.images && product.images.length > 0) ? product.images : [product.image]
 
   return (
     <>
@@ -261,7 +273,7 @@ export default function ProductDetailPage() {
             <div className="relative flex gap-4">
               <div className="hidden lg:flex flex-col gap-2 shrink-0">
                 {galleryImages.map((imgUrl: string, index: number) => {
-                  const isActive = activeImage === imgUrl
+                  const isActive = isSameImage(activeImage, imgUrl)
                   return (
                     <button
                       key={index}
@@ -275,8 +287,9 @@ export default function ProductDetailPage() {
                     >
                       <img
                         className="w-full h-full object-cover"
-                        src={imgUrl}
+                        src={imgUrl || '/products/placeholder.svg'}
                         alt={`${product.alt} miniatura ${index + 1}`}
+                        onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
                       />
                     </button>
                   )
@@ -286,13 +299,18 @@ export default function ProductDetailPage() {
                 ref={imageContainerRef}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
-                onClick={() => setLightboxIndex(galleryImages.indexOf(activeImage))}
+                onClick={() => {
+                  const idx = galleryImages.findIndex(img => isSameImage(img, activeImage))
+                  setLightboxIndex(idx !== -1 ? idx : 0)
+                }}
                 className="relative w-full aspect-[4/3] bg-white rounded-2xl overflow-hidden border border-neutral-200/60 shadow-sm cursor-crosshair"
               >
                 <img
+                  key={activeImage || product.image}
                   className="w-full h-full object-contain select-none"
-                  src={activeImage || product.image}
+                  src={(activeImage || product.image) || '/products/placeholder.svg'}
                   alt={product.alt}
+                  onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
                 />
                 {zoom.show && (
                   <div
@@ -310,9 +328,10 @@ export default function ProductDetailPage() {
               {zoom.show && (
                 <div className="hidden lg:block absolute left-[calc(100%+16px)] top-0 w-[400px] h-[400px] bg-white overflow-hidden z-20">
                   <div
+                    key={activeImage || product.image}
                     className="w-full h-full"
                     style={{
-                      backgroundImage: `url('${activeImage || product.image}')`,
+                      backgroundImage: `url('${(activeImage || product.image) || '/products/placeholder.svg'}')`,
                       backgroundSize: '250%',
                       backgroundPosition: `${zoom.x}% ${zoom.y}%`,
                       backgroundRepeat: 'no-repeat',
@@ -323,7 +342,7 @@ export default function ProductDetailPage() {
             </div>
             <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 scrollbar-none">
               {galleryImages.map((imgUrl: string, index: number) => {
-                const isActive = activeImage === imgUrl
+                const isActive = isSameImage(activeImage, imgUrl)
                 return (
                   <button
                     key={index}
@@ -337,8 +356,9 @@ export default function ProductDetailPage() {
                   >
                     <img
                       className="w-full h-full object-cover"
-                      src={imgUrl}
+                      src={imgUrl || '/products/placeholder.svg'}
                       alt={`${product.alt} miniatura ${index + 1}`}
+                      onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
                     />
                   </button>
                 )
@@ -418,9 +438,10 @@ export default function ProductDetailPage() {
                           )}
                           <img
                             className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${item.sold ? 'opacity-60' : ''}`}
-                            src={item.image}
+                            src={item.image || '/products/placeholder.svg'}
                             alt={item.alt}
                             loading="lazy"
+                            onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
                           />
                         </div>
                         <div className="px-1 pb-1">
@@ -495,8 +516,9 @@ export default function ProductDetailPage() {
           )}
           <img
             className="max-w-[90vw] max-h-[85vh] object-contain select-none"
-            src={galleryImages[lightboxIndex]}
+            src={galleryImages[lightboxIndex] || '/products/placeholder.svg'}
             alt={product.alt}
+            onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
           />
           {galleryImages.length > 1 && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
