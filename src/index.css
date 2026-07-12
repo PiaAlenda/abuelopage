@@ -66,6 +66,13 @@
   zoom: 125%;
 }
 
+img {
+  touch-action: manipulation;
+}
+.product-card, .product-card * {
+  touch-action: manipulation;
+}
+
 body {
   margin: 0;
   background-color: var(--color-background);
