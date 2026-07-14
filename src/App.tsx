@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useLocation } from './lib/Router'
 import HomePage from './pages/HomePage'
 import ProductDetailPage from './pages/ProductDetailPage'
@@ -5,10 +6,15 @@ import CategoryPage from './pages/CategoryPage'
 import LoginPage from './pages/LoginPage'
 import { CartProvider } from './context/CartContext'
 import { ProductProvider } from './context/ProductContext'
+import { useAuth } from './context/AuthContext'
 import CartDrawer from './components/cart/CartDrawer'
+import FloatingActionButton from './components/product/FloatingActionButton'
+import CreateProductModal from './components/product/CreateProductModal'
 
 export default function App() {
   const params = useLocation()
+  const { isAdmin } = useAuth()
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   const content = () => {
     if (params.has('login')) {
@@ -45,6 +51,17 @@ export default function App() {
   return (
     <ProductProvider>
       {content()}
+      {isAdmin && (
+        <>
+          <FloatingActionButton onClick={() => setShowCreateModal(true)} />
+          {showCreateModal && (
+            <CreateProductModal
+              onClose={() => setShowCreateModal(false)}
+              onCreated={() => setShowCreateModal(false)}
+            />
+          )}
+        </>
+      )}
     </ProductProvider>
   )
 }

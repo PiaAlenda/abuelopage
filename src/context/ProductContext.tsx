@@ -9,6 +9,7 @@ interface ProductContextValue {
   displayProducts: Product[]
   loading: boolean
   updateProduct: (id: number, data: Partial<Pick<Product, 'price' | 'sold' | 'name' | 'alt' | 'description'>>) => Promise<string | null>
+  createProduct: (data: Omit<Product, 'id'>) => Promise<{ product: Product | null; error: string | null }>
 }
 
 const ProductContext = createContext<ProductContextValue | null>(null)
@@ -55,8 +56,23 @@ export function ProductProvider({ children }: { children: ReactNode }) {
     return null
   }, [isAdmin])
 
+  const createProduct = useCallback(async (data: Omit<Product, 'id'>): Promise<{ product: Product | null; error: string | null }> => {
+    if (!isAdmin) return { product: null, error: 'No tienes permisos' }
+
+    const { data: newProduct, error } = await supabase
+      .from('products')
+      .insert(data)
+      .select()
+      .single()
+
+    if (error) return { product: null, error: error.message }
+
+    setAllProducts(prev => [...prev, newProduct as Product])
+    return { product: newProduct as Product, error: null }
+  }, [isAdmin])
+
   return (
-    <ProductContext.Provider value={{ products, allProducts, displayProducts, loading, updateProduct }}>
+    <ProductContext.Provider value={{ products, allProducts, displayProducts, loading, updateProduct, createProduct }}>
       {children}
     </ProductContext.Provider>
   )
