@@ -197,12 +197,12 @@ export default function CreateProductModal({ onClose, onCreated }: CreateProduct
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 sm:p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
         ref={contentRef}
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md flex flex-col max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-2rem)] animate-soft-reveal"
+        className="bg-white shadow-xl w-full h-full flex flex-col animate-soft-reveal sm:w-auto sm:h-auto sm:rounded-2xl sm:max-w-md sm:max-h-[calc(100dvh-2rem)]"
       >
         <div className="flex items-center justify-between px-5 sm:px-6 pt-5 sm:pt-6 pb-0 shrink-0">
           <h3 className="text-lg font-serif font-semibold text-neutral-800">Añadir producto</h3>
@@ -211,7 +211,7 @@ export default function CreateProductModal({ onClose, onCreated }: CreateProduct
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 space-y-4 overscroll-contain">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 pt-5 space-y-4 overscroll-contain">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
               Nombre <span className="text-red-500">*</span>
@@ -270,7 +270,7 @@ export default function CreateProductModal({ onClose, onCreated }: CreateProduct
             <div className="w-full bg-[#FBF9F6] border-2 border-dashed border-neutral-300 rounded-lg px-3 py-4 text-sm text-neutral-500 transition-colors">
               {images.length > 0 ? (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 max-h-44 sm:max-h-64 overflow-y-auto overscroll-contain pr-0.5">
                     {images.map((img, index) => (
                       <div
                         key={img.id}
@@ -345,26 +345,27 @@ export default function CreateProductModal({ onClose, onCreated }: CreateProduct
             </button>
           </div>
 
-          {error && (
-            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
-          )}
-        </div>
-
-        <div className="flex gap-3 px-5 sm:px-6 pb-5 sm:pb-6 pt-2 shrink-0">
-          <button
-            onClick={onClose}
-            disabled={saving}
-            className="flex-1 text-sm font-semibold bg-white text-neutral-500 py-2.5 rounded-lg border border-neutral-300 hover:border-neutral-400 transition-colors disabled:opacity-50"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving || images.length === 0}
-            className="flex-1 text-sm font-semibold bg-amber-800 text-white py-2.5 rounded-lg hover:bg-amber-900 transition-colors disabled:opacity-50"
-          >
-            {saving ? savingLabel : 'Crear'}
-          </button>
+          <div className="sticky bottom-0 bg-white z-10 pb-5 sm:pb-6 pt-2 -mx-5 sm:-mx-6 px-5 sm:px-6">
+            {error && (
+              <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">{error}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                disabled={saving}
+                className="flex-1 text-sm font-semibold bg-white text-neutral-500 py-2.5 rounded-lg border border-neutral-300 hover:border-neutral-400 transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving || images.length === 0}
+                className="flex-1 text-sm font-semibold bg-amber-800 text-white py-2.5 rounded-lg hover:bg-amber-900 transition-colors disabled:opacity-50"
+              >
+                {saving ? savingLabel : 'Crear'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
