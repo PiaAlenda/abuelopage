@@ -1,16 +1,23 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useLocation, Link } from '../lib/Router'
 import { useProducts } from '../context/ProductContext'
+import { useAuth } from '../context/AuthContext'
 import { getUniqueTypes, getProductType } from '../utils/productTypes'
 import Header from '../components/global/Header'
 import BottomNavBar from '../components/global/BottomNavBar'
 import ProductCard from '../components/product/ProductCard'
+import EditProductModal from '../components/product/EditProductModal'
+import ConfirmDialog from '../components/global/ConfirmDialog'
+import type { Product } from '../types'
 
 const CATEGORIES = ['Bazar', 'Hogar', 'Electrónica', 'Otro'] as const
 
 export default function CategoryPage() {
   const params = useLocation()
-  const { displayProducts } = useProducts()
+  const { displayProducts, deleteProduct } = useProducts()
+  const { isAdmin } = useAuth()
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
   const selectedCategory = useMemo(() => {
     const cat = params.get('category')
     return cat && CATEGORIES.includes(cat as any) ? cat : null
@@ -231,38 +238,60 @@ export default function CategoryPage() {
                     const type = getProductType(product.name)
                     const isSold = product.sold === true
                     return (
-                      <Link
-                        key={product.id}
-                        to={isSold ? '#' : `?id=${product.id}`}
-                        onClick={isSold ? (e) => e.preventDefault() : undefined}
-                        className={`flex flex-col gap-3 group ${isSold ? 'opacity-60 pointer-events-none' : ''}`}
-                      >
-                        <div className={`relative aspect-[3/4] bg-[#FAF7F2] rounded-2xl overflow-hidden border ${isSold ? 'border-neutral-300/50' : 'border-neutral-200/60'}`}>
-                          <img
-                            src={product.image || '/products/placeholder.svg'}
-                            alt={product.alt}
-                            className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                            loading="lazy"
-                            onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
-                          />
-                          {isSold && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="bg-red-700 text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">
-                                Vendido
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex flex-col px-0.5">
-                          <span className="text-[10px] uppercase tracking-widest text-neutral-400 mb-0.5">{type}</span>
-                          <h3 className="text-[15px] font-medium text-neutral-900 leading-snug line-clamp-1">{product.name}</h3>
-                          {product.price != null && (
-                            <p className="text-base font-semibold mt-0.5 text-amber-800">
-                              ${product.price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                            </p>
-                          )}
-                        </div>
-                      </Link>
+                      <div key={product.id} className={`relative flex flex-col gap-3 group ${isSold ? 'opacity-60 pointer-events-none' : ''}`}>
+                        {isAdmin && (
+                          <div className="absolute top-2 right-2 z-10 flex gap-1">
+                            <button
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingProduct(product) }}
+                              className="w-7 h-7 flex items-center justify-center rounded-full bg-white/90 border border-neutral-300 text-neutral-600 shadow-sm hover:bg-amber-800 hover:text-white hover:border-amber-800 transition-all active:scale-90"
+                              aria-label="Editar producto"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">edit</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault(); e.stopPropagation()
+                                setDeletingProduct(product)
+                              }}
+                              className="w-7 h-7 flex items-center justify-center rounded-full bg-white/90 border border-neutral-300 text-neutral-600 shadow-sm hover:bg-red-600 hover:text-white hover:border-red-600 transition-all active:scale-90"
+                              aria-label="Eliminar producto"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">delete</span>
+                            </button>
+                          </div>
+                        )}
+                        <Link
+                          to={isSold ? '#' : `?id=${product.id}`}
+                          onClick={isSold ? (e) => e.preventDefault() : undefined}
+                          className="block"
+                        >
+                          <div className={`relative aspect-[3/4] bg-[#FAF7F2] rounded-2xl overflow-hidden border ${isSold ? 'border-neutral-300/50' : 'border-neutral-200/60'}`}>
+                            <img
+                              src={product.image || '/products/placeholder.svg'}
+                              alt={product.alt}
+                              className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                              loading="lazy"
+                              onError={e => { if (e.currentTarget.src !== '/products/placeholder.svg') e.currentTarget.src = '/products/placeholder.svg' }}
+                            />
+                            {isSold && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="bg-red-700 text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full">
+                                  Vendido
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col px-0.5 pt-3">
+                            <span className="text-[10px] uppercase tracking-widest text-neutral-400 mb-0.5">{type}</span>
+                            <h3 className="text-[15px] font-medium text-neutral-900 leading-snug line-clamp-1">{product.name}</h3>
+                            {product.price != null && (
+                              <p className="text-base font-semibold mt-0.5 text-amber-800">
+                                ${product.price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                              </p>
+                            )}
+                          </div>
+                        </Link>
+                      </div>
                     )
                   })}
                 </div>
@@ -276,6 +305,26 @@ export default function CategoryPage() {
           </section>
         </div>
       </main>
+      {editingProduct && (
+        <EditProductModal
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
+        />
+      )}
+
+      <ConfirmDialog
+        open={deletingProduct !== null}
+        title="Eliminar producto"
+        message={deletingProduct ? `¿Eliminar "${deletingProduct.name}" permanentemente? Esta acción no se puede deshacer.` : ''}
+        onConfirm={async () => {
+          if (!deletingProduct) return
+          const err = await deleteProduct(deletingProduct.id)
+          setDeletingProduct(null)
+          if (err) alert('Error: ' + err)
+        }}
+        onCancel={() => setDeletingProduct(null)}
+      />
+
       <BottomNavBar />
     </>
   )

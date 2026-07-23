@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext'
 import Header from '../components/global/Header'
 import BottomNavBar from '../components/global/BottomNavBar'
 import { useCart } from '../context/CartContext'
+import EditProductModal from '../components/product/EditProductModal'
+import ConfirmDialog from '../components/global/ConfirmDialog'
 import type { Product } from '../types'
 
 const relatedProducts = (product: Product, all: Product[], count = 10): Product[] =>
@@ -46,12 +48,9 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState<string>('')
   const { addItem, removeItem, isInCart, openCart } = useCart()
   const { isAdmin } = useAuth()
-  const { allProducts, displayProducts, updateProduct } = useProducts()
+  const { allProducts, displayProducts, deleteProduct } = useProducts()
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editName, setEditName] = useState('')
-  const [editDesc, setEditDesc] = useState('')
-  const [editPrice, setEditPrice] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const [zoom, setZoom] = useState({ show: false, x: 0, y: 0, bgX: 0, bgY: 0 })
@@ -116,25 +115,11 @@ export default function ProductDetailPage() {
     return () => el.removeEventListener('scroll', updateRelatedEdge)
   }, [updateRelatedEdge, product])
 
-  const handleSave = async () => {
+  const handleDelete = async () => {
     if (!product) return
-    setSaving(true)
-    const err = await updateProduct(product.id, {
-      name: editName,
-      alt: editDesc,
-      price: editPrice === '' ? null : Number(editPrice),
-    })
-    setSaving(false)
+    const err = await deleteProduct(product.id)
     if (err) alert('Error: ' + err)
-    else setShowEditModal(false)
-  }
-
-  const openModal = () => {
-    if (!product) return
-    setEditName(product.name)
-    setEditDesc(product.alt)
-    setEditPrice(product.price?.toString() ?? '')
-    setShowEditModal(true)
+    else window.history.back()
   }
 
   if (!product) {
@@ -181,13 +166,22 @@ export default function ProductDetailPage() {
                   {product.name}
                 </h1>
                 {isAdmin && (
-                  <button
-                    onClick={openModal}
-                    className="mt-1 shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-white border border-neutral-300 text-neutral-600 shadow-sm hover:bg-amber-800 hover:text-white hover:border-amber-800 transition-all active:scale-90"
-                    aria-label="Editar producto"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">edit</span>
-                  </button>
+                  <div className="flex gap-1.5 mt-1 shrink-0">
+                    <button
+                      onClick={() => setShowEditModal(true)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-neutral-300 text-neutral-600 shadow-sm hover:bg-amber-800 hover:text-white hover:border-amber-800 transition-all active:scale-90"
+                      aria-label="Editar producto"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">edit</span>
+                    </button>
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-neutral-300 text-neutral-600 shadow-sm hover:bg-red-600 hover:text-white hover:border-red-600 transition-all active:scale-90"
+                      aria-label="Eliminar producto"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -254,13 +248,22 @@ export default function ProductDetailPage() {
                 {product.name}
               </h1>
               {isAdmin && (
-                <button
-                  onClick={openModal}
-                  className="mt-1 shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-white border border-neutral-300 text-neutral-600 shadow-sm hover:bg-amber-800 hover:text-white hover:border-amber-800 transition-all active:scale-90"
-                  aria-label="Editar producto"
-                >
-                  <span className="material-symbols-outlined text-[18px]">edit</span>
-                </button>
+                <div className="flex gap-1.5 mt-1 shrink-0">
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-neutral-300 text-neutral-600 shadow-sm hover:bg-amber-800 hover:text-white hover:border-amber-800 transition-all active:scale-90"
+                    aria-label="Editar producto"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-neutral-300 text-neutral-600 shadow-sm hover:bg-red-600 hover:text-white hover:border-red-600 transition-all active:scale-90"
+                    aria-label="Eliminar producto"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -535,92 +538,20 @@ export default function ProductDetailPage() {
       )}
 
       {showEditModal && product && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowEditModal(false) }}
-        >
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5 animate-soft-reveal">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-serif font-semibold text-neutral-800">Editar producto</h3>
-              <button onClick={() => setShowEditModal(false)} className="text-neutral-400 hover:text-neutral-700 transition-colors">
-                <span className="material-symbols-outlined text-[24px]">close</span>
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">Nombre</label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  className="w-full bg-[#FBF9F6] border border-neutral-200 rounded-lg px-3 py-2 text-sm text-neutral-800 outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">Descripción</label>
-                <textarea
-                  value={editDesc}
-                  onChange={e => setEditDesc(e.target.value)}
-                  rows={3}
-                  className="w-full bg-[#FBF9F6] border border-neutral-200 rounded-lg px-3 py-2 text-sm text-neutral-800 outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 transition-colors resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">Precio</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={editPrice}
-                  onChange={e => setEditPrice(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full bg-[#FBF9F6] border border-neutral-200 rounded-lg px-3 py-2 text-sm text-neutral-800 outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">Estado</span>
-                <button
-                  onClick={async () => {
-                    if (!product) return
-                    setSaving(true)
-                    const err = await updateProduct(product.id, { sold: !product.sold })
-                    setSaving(false)
-                    if (err) alert('Error: ' + err)
-                    else setShowEditModal(false)
-                  }}
-                  disabled={saving}
-                  className={`text-[11px] font-semibold uppercase tracking-wider px-4 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                    product.sold
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
-                      : 'bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100'
-                  }`}
-                >
-                  {product.sold ? 'Activar' : 'Vendido'}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="flex-1 text-sm font-semibold bg-white text-neutral-500 py-2.5 rounded-lg border border-neutral-300 hover:border-neutral-400 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-1 text-sm font-semibold bg-amber-800 text-white py-2.5 rounded-lg hover:bg-amber-900 transition-colors disabled:opacity-50"
-              >
-                {saving ? 'Guardando...' : 'Guardar'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditProductModal
+          product={product}
+          onClose={() => setShowEditModal(false)}
+          onDeleted={() => window.history.back()}
+        />
       )}
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Eliminar producto"
+        message={`¿Eliminar "${product.name}" permanentemente? Esta acción no se puede deshacer.`}
+        onConfirm={() => { setShowDeleteConfirm(false); handleDelete() }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
 
       <BottomNavBar />
     </>

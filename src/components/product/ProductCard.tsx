@@ -4,6 +4,8 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { useProducts } from '../../context/ProductContext'
 import type { Product } from '../../types'
+import EditProductModal from './EditProductModal'
+import ConfirmDialog from '../global/ConfirmDialog'
 
 interface ProductCardProps {
   product: Product
@@ -14,12 +16,9 @@ interface ProductCardProps {
 export default function ProductCard({ product, className = '', compact = false }: ProductCardProps) {
   const { addItem, removeItem, isInCart, openCart } = useCart()
   const { isAdmin } = useAuth()
-  const { updateProduct } = useProducts()
+  const { deleteProduct } = useProducts()
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editName, setEditName] = useState(product.name)
-  const [editDesc, setEditDesc] = useState(product.alt)
-  const [editPrice, setEditPrice] = useState(product.price?.toString() ?? '')
-  const [saving, setSaving] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const inCart = isInCart(product.id)
   const isSold = product.sold === true
@@ -39,35 +38,29 @@ export default function ProductCard({ product, className = '', compact = false }
   const openModal = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setEditName(product.name)
-    setEditDesc(product.alt)
-    setEditPrice(product.price?.toString() ?? '')
     setShowEditModal(true)
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    const err = await updateProduct(product.id, {
-      name: editName,
-      alt: editDesc,
-      price: editPrice === '' ? null : Number(editPrice),
-    })
-    setSaving(false)
-    if (err) alert('Error: ' + err)
-    else setShowEditModal(false)
   }
 
   return (
     <>
       <div className={`group/card relative flex flex-col rounded-3xl border shadow-sm transition-all duration-300 ${compact ? 'p-2' : 'p-3'} ${className} ${isSold ? 'bg-neutral-200/60 border-neutral-300/50' : 'bg-white border-neutral-200/60 hover:shadow-md'}`}>
         {isAdmin && (
-          <button
-            onClick={openModal}
-            className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 border border-neutral-300 text-neutral-600 shadow-sm hover:bg-amber-800 hover:text-white hover:border-amber-800 transition-all active:scale-90"
-            aria-label="Editar producto"
-          >
-            <span className="material-symbols-outlined text-[18px]">edit</span>
-          </button>
+          <div className="absolute top-4 right-4 z-10 flex gap-1.5">
+            <button
+              onClick={openModal}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/90 border border-neutral-300 text-neutral-600 shadow-sm hover:bg-amber-800 hover:text-white hover:border-amber-800 transition-all active:scale-90"
+              aria-label="Editar producto"
+            >
+              <span className="material-symbols-outlined text-[18px]">edit</span>
+            </button>
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDeleteConfirm(true) }}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/90 border border-neutral-300 text-neutral-600 shadow-sm hover:bg-red-600 hover:text-white hover:border-red-600 transition-all active:scale-90"
+              aria-label="Eliminar producto"
+            >
+              <span className="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+          </div>
         )}
 
         <Link
@@ -159,91 +152,23 @@ export default function ProductCard({ product, className = '', compact = false }
         </div>
       </div>
 
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Eliminar producto"
+        message={`¿Eliminar "${product.name}" permanentemente? Esta acción no se puede deshacer.`}
+        onConfirm={async () => {
+          setShowDeleteConfirm(false)
+          const err = await deleteProduct(product.id)
+          if (err) alert('Error: ' + err)
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
+
       {showEditModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={(e) => { if (e.target === e.currentTarget) setShowEditModal(false) }}
-        >
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5 animate-soft-reveal">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-serif font-semibold text-neutral-800">Editar producto</h3>
-              <button onClick={() => setShowEditModal(false)} className="text-neutral-400 hover:text-neutral-700 transition-colors">
-                <span className="material-symbols-outlined text-[24px]">close</span>
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">Nombre</label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  className="w-full bg-[#FBF9F6] border border-neutral-200 rounded-lg px-3 py-2 text-sm text-neutral-800 outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">Descripción</label>
-                <textarea
-                  value={editDesc}
-                  onChange={e => setEditDesc(e.target.value)}
-                  rows={3}
-                  className="w-full bg-[#FBF9F6] border border-neutral-200 rounded-lg px-3 py-2 text-sm text-neutral-800 outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 transition-colors resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">Precio</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={editPrice}
-                  onChange={e => setEditPrice(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full bg-[#FBF9F6] border border-neutral-200 rounded-lg px-3 py-2 text-sm text-neutral-800 outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">Estado</span>
-                <button
-                  onClick={async () => {
-                    setSaving(true)
-                    const err = await updateProduct(product.id, { sold: !product.sold })
-                    setSaving(false)
-                    if (err) alert('Error: ' + err)
-                    else setShowEditModal(false)
-                  }}
-                  disabled={saving}
-                  className={`text-[11px] font-semibold uppercase tracking-wider px-4 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
-                    product.sold
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
-                      : 'bg-rose-50 text-rose-600 border-rose-300 hover:bg-rose-100'
-                  }`}
-                >
-                  {product.sold ? 'Activar' : 'Vendido'}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="flex-1 text-sm font-semibold bg-white text-neutral-500 py-2.5 rounded-lg border border-neutral-300 hover:border-neutral-400 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-1 text-sm font-semibold bg-amber-800 text-white py-2.5 rounded-lg hover:bg-amber-900 transition-colors disabled:opacity-50"
-              >
-                {saving ? 'Guardando...' : 'Guardar'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditProductModal
+          product={product}
+          onClose={() => setShowEditModal(false)}
+        />
       )}
     </>
   )

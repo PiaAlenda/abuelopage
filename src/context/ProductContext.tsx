@@ -8,7 +8,8 @@ interface ProductContextValue {
   allProducts: Product[]
   displayProducts: Product[]
   loading: boolean
-  updateProduct: (id: number, data: Partial<Pick<Product, 'price' | 'sold' | 'name' | 'alt' | 'description'>>) => Promise<string | null>
+  updateProduct: (id: number, data: Partial<Pick<Product, 'price' | 'sold' | 'name' | 'alt' | 'description' | 'image' | 'images'>>) => Promise<string | null>
+  deleteProduct: (id: number) => Promise<string | null>
   createProduct: (data: Omit<Product, 'id'>) => Promise<{ product: Product | null; error: string | null }>
 }
 
@@ -42,7 +43,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   const products = allProducts.filter(p => !p.sold)
   const displayProducts = isAdmin ? allProducts : products
 
-  const updateProduct = useCallback(async (id: number, data: Partial<Pick<Product, 'price' | 'sold' | 'name' | 'alt' | 'description'>>): Promise<string | null> => {
+  const updateProduct = useCallback(async (id: number, data: Partial<Pick<Product, 'price' | 'sold' | 'name' | 'alt' | 'description' | 'image' | 'images'>>): Promise<string | null> => {
     if (!isAdmin) return 'No tienes permisos'
 
     const { error } = await supabase
@@ -53,6 +54,20 @@ export function ProductProvider({ children }: { children: ReactNode }) {
     if (error) return error.message
 
     setAllProducts(prev => prev.map(p => p.id === id ? { ...p, ...data } : p))
+    return null
+  }, [isAdmin])
+
+  const deleteProduct = useCallback(async (id: number): Promise<string | null> => {
+    if (!isAdmin) return 'No tienes permisos'
+
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id)
+
+    if (error) return error.message
+
+    setAllProducts(prev => prev.filter(p => p.id !== id))
     return null
   }, [isAdmin])
 
@@ -72,7 +87,7 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   }, [isAdmin])
 
   return (
-    <ProductContext.Provider value={{ products, allProducts, displayProducts, loading, updateProduct, createProduct }}>
+    <ProductContext.Provider value={{ products, allProducts, displayProducts, loading, updateProduct, deleteProduct, createProduct }}>
       {children}
     </ProductContext.Provider>
   )
