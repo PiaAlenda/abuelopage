@@ -50,7 +50,7 @@ function convertToWebP(file: File): Promise<Blob> {
   })
 }
 
-export default function EditProductModal({ product, onClose, onDeleted }: EditProductModalProps) {
+export default function EditProductModal({ product, onClose, onDeleted: _onDeleted }: EditProductModalProps) {
   const { updateProduct } = useProducts()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
