@@ -6,6 +6,7 @@ import type { Product } from '../../types'
 interface EditProductModalProps {
   product: Product
   onClose: () => void
+  onDeleted?: () => void
 }
 
 const MAX_IMAGE_DIMENSION = 1920
@@ -49,7 +50,7 @@ function convertToWebP(file: File): Promise<Blob> {
   })
 }
 
-export default function EditProductModal({ product, onClose }: EditProductModalProps) {
+export default function EditProductModal({ product, onClose, onDeleted }: EditProductModalProps) {
   const { updateProduct } = useProducts()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
